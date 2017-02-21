@@ -70,14 +70,6 @@ void iniLuaStates(lua_ptr_entry **lpe)
 		}
 	}
 
-	// c=f;
-
-	// while(c)
-	//{
-	//        printf("%s\r\n",c->name);
-	//        c = c->next;
-	// }
-
 	closedir(dir);
 }
 
@@ -155,8 +147,6 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 	
 	evreturn = evbuffer_new();
 	evbuffer_add_printf(evreturn,"+ok$%ld$%s\r\n",sizeof(result),result);
-	//evbuffer_add_printf(evreturn,"+ok\r\n");
-	//printf("evbuffer_add_printf error : %s",strerror(errno));
 
 	if(bufferevent_write_buffer(incoming,evreturn)!=SUCCESS){
 		printf("evbuffer_add_printf error : %s",strerror(errno));
