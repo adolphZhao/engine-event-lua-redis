@@ -31,6 +31,8 @@ typedef struct lua_ptr lua_ptr_entry ;
 
 lua_ptr_entry * lpe_list;
 
+static int jsonParse(lua_State *L);
+
 lua_State * createLS(char *file)
 {
 	char path[256];
@@ -40,6 +42,7 @@ lua_State * createLS(char *file)
 	luaL_openlibs(L);
 	luaL_dofile(L, path);
 	printf("LUA=> %s has been loaded.\r\n",path);
+	lua_register(L,"jsonParse",jsonParse);
 	return L;
 }
 
@@ -87,6 +90,21 @@ lua_State * findState(const char *file,lua_ptr_entry *lpe){
 	return NULL;
 }
 
+static int jsonParse(lua_State *L)
+{
+	int i =0;
+	const char * json = luaL_checkstring(L,1);
+	JSON_Value *schema = json_parse_string(json);
+	JSON_Array *commits = json_value_get_array(schema);
+	int count = json_array_get_count(commits);
+	for (i = 0; i < count; i++)
+	{
+		const char * value = json_array_get_string(commits,i);
+              	lua_pushstring(L, value);
+    	}
+    	return count;
+}
+
 
 int debug = 0;
 extern int errno ;
@@ -106,12 +124,18 @@ void setnonblock(int fd)
 	fcntl(fd, F_SETFL, flags);
 }
 
-const char * call_lua(lua_State * L,const char *func,const char *json)
+const char * call_lua(lua_State * L,const char *func,JSON_Array *commits)
 {
 	const char * result;
-	lua_getglobal(L,func);  
-	lua_pushstring(L,json);  
-	lua_pcall(L,1,1,0);  
+	int i = 0;
+	lua_getglobal(L,func); 
+	int count = json_array_get_count(commits);
+        for (i = 0; i < count; i++)
+        {
+                const char * value = json_array_get_string(commits,i);
+                lua_pushstring(L, value);
+        } 
+	lua_pcall(L,count,1,0);  
 	result = lua_tostring(L,-1);  
 	return result;  
 }
@@ -120,7 +144,8 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 {
 	struct evbuffer *evreturn;
 	char *req;
-	const char * file,*func,*params;
+	const char * file,*func;
+	JSON_Array *params;
 	int i =0;
 	while(1){
 		req = evbuffer_readline(incoming->input);
@@ -131,10 +156,9 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 	JSON_Value *schema = json_parse_string(req);
 	file =json_object_get_string(json_object(schema),"f");
 	func =json_object_get_string(json_object(schema),"m");	
-	params = json_object_get_string(json_object(schema),"p");
+	params = json_object_get_array(json_object(schema),"p");
 
-	printf("request => [file: ./script/%s.lua , func: %s , params: %s]\r\n",file,func,params);
-
+	printf("request => [file: ./script/%s.lua , func: %s ]\r\n",file,func);
 	const char * result;
 	lua_State * L = findState(file,lpe_list);
 	if(L==NULL){
@@ -146,7 +170,7 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 	printf("response =>[ result: %s]\r\n",result);
 	
 	evreturn = evbuffer_new();
-	evbuffer_add_printf(evreturn,"+ok$%ld$%s\r\n",sizeof(result),result);
+	evbuffer_add_printf(evreturn,"+ok$%ld$%s\r\n",strlen(result),result);
 
 	if(bufferevent_write_buffer(incoming,evreturn)!=SUCCESS){
 		printf("evbuffer_add_printf error : %s",strerror(errno));
