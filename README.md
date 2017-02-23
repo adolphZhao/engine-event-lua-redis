@@ -7,12 +7,12 @@ develop language C and embed language lua.
 
 #install
 
-yum -y install libevent-devel
-yum -y install lua5.1-0-dev
-./configure
-make
+yum -y install libevent-devel  
+yum -y install lua5.1-0-dev  
+./configure  
+make  
 
 #usage
 
-see test.php
-see script/func.lua
+see test.php  
+see script/func.lua  
