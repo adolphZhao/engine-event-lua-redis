@@ -11,3 +11,8 @@ yum -y install libevent-devel
 yum -y install lua5.1-0-dev
 ./configure
 make
+
+#usage
+
+see test.php
+see script/func.lua
