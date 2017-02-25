@@ -9,103 +9,16 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
-#include <lua.h>
-#include <lauxlib.h>     
-#include <lualib.h> 
 #include <string.h>
-#include "parson.h"
 #include <errno.h>
 #include <dirent.h>
-
-struct lua_ptr{
-	char *name;
-	lua_State * LS;
-	struct lua_ptr * next;
-};
-
-typedef struct lua_ptr lua_ptr_entry ;
+#include "luaconf.h" 
 
 #define SERVER_PORT 9005
 #define SUCCESS 0
 #define FAILURE -1
 
 lua_ptr_entry * lpe_list;
-
-static int jsonParse(lua_State *L);
-
-lua_State * createLS(char *file)
-{
-	char path[256];
-	sprintf(path,"./script/%s",file);
-	lua_State * L;
-	L = luaL_newstate();
-	luaL_openlibs(L);
-	luaL_dofile(L, path);
-	printf("LUA=> %s has been loaded.\r\n",path);
-	lua_register(L,"jsonParse",jsonParse);
-	return L;
-}
-
-void iniLuaStates(lua_ptr_entry **lpe)
-{
-	DIR    *dir;
-	struct    dirent    *ptr;
-	lua_ptr_entry *p,*c;
-	dir = opendir("./script/");
-	*lpe=(lua_ptr_entry *)malloc(sizeof(lua_ptr_entry));
-	(*lpe)->name="__root";
-	(*lpe)->LS=NULL;
-	(*lpe)->next=NULL;
-	p = *lpe;
-	while((ptr = readdir(dir)) != NULL) 
-	{
-		if(strcmp(".",ptr->d_name)!=0&&strcmp("..",ptr->d_name)){
-			while(p){
-				if(p->next==NULL)
-					break;
-				p=p->next;
-			}
-			c=(lua_ptr_entry *)malloc(sizeof(lua_ptr_entry));
-			c->name = ptr->d_name;
-			c->LS =createLS(ptr->d_name); 
-			c->next = p->next;
-			p->next = c;
-		}
-	}
-
-	closedir(dir);
-}
-
-lua_State * findState(const char *file,lua_ptr_entry *lpe){
-	char path[256];
-        sprintf(path,"%s.lua",file);
-
-	while(lpe)
-	{
-		if(strcmp(lpe->name,path)==0){
-			return lpe->LS;
-		}
-		lpe = lpe->next;
-	}
-	return NULL;
-}
-
-static int jsonParse(lua_State *L)
-{
-	int i =0;
-	const char * json = luaL_checkstring(L,1);
-	JSON_Value *schema = json_parse_string(json);
-	JSON_Array *commits = json_value_get_array(schema);
-	int count = json_array_get_count(commits);
-	for (i = 0; i < count; i++)
-	{
-		const char * value = json_array_get_string(commits,i);
-              	lua_pushstring(L, value);
-    	}
-    	return count;
-}
-
-
 int debug = 0;
 extern int errno ;
 lua_State * L=NULL;
@@ -153,6 +66,8 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 		i++;
 	}
 
+printf("%s\r\n",req);
+
 	JSON_Value *schema = json_parse_string(req);
 	file =json_object_get_string(json_object(schema),"f");
 	func =json_object_get_string(json_object(schema),"m");	
@@ -160,7 +75,7 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 
 	printf("request => [file: ./script/%s.lua , func: %s ]\r\n",file,func);
 	const char * result;
-	lua_State * L = findState(file,lpe_list);
+	lua_State * L = findState(file);
 	if(L==NULL){
 		result ="LUA invoked failure.";
 	}
@@ -227,7 +142,7 @@ void accept_callback(int fd,short ev,void *arg)
 int main(int argc,char **argv)
 {
 
-	iniLuaStates(&lpe_list);
+	iniLuaStates();
 
 	int socketlisten;
 	struct sockaddr_in addresslisten;

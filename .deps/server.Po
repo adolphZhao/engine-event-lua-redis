@@ -86,15 +86,16 @@ server.o: server.c /usr/local/include/event.h \
  /usr/include/unistd.h /usr/include/sys/unistd.h \
  /usr/include/sys/_types/_posix_vdisable.h /usr/include/sys/select.h \
  /usr/include/sys/_types/_uuid_t.h /usr/include/gethostuuid.h \
- /usr/include/err.h /usr/local/include/lua.h /usr/local/include/luaconf.h \
+ /usr/include/err.h /usr/include/errno.h /usr/include/sys/errno.h \
+ /usr/include/dirent.h /usr/include/sys/dirent.h luaconf.h \
+ /usr/local/include/lua.h /usr/local/include/luaconf.h \
  /usr/local/lib/gcc/x86_64-apple-darwin15.6.0/6.3.0/include-fixed/limits.h \
  /usr/local/lib/gcc/x86_64-apple-darwin15.6.0/6.3.0/include-fixed/syslimits.h \
  /usr/include/limits.h /usr/include/machine/limits.h \
  /usr/include/i386/limits.h /usr/include/i386/_limits.h \
  /usr/include/sys/syslimits.h /usr/local/include/lauxlib.h \
  /usr/local/include/lua.h /usr/local/include/lualib.h parson.h \
- /usr/include/errno.h /usr/include/sys/errno.h /usr/include/dirent.h \
- /usr/include/sys/dirent.h
+ hashtable.h hashfunc.h
 
 /usr/local/include/event.h:
 
@@ -390,6 +391,16 @@ server.o: server.c /usr/local/include/event.h \
 
 /usr/include/err.h:
 
+/usr/include/errno.h:
+
+/usr/include/sys/errno.h:
+
+/usr/include/dirent.h:
+
+/usr/include/sys/dirent.h:
+
+luaconf.h:
+
 /usr/local/include/lua.h:
 
 /usr/local/include/luaconf.h:
@@ -416,10 +427,6 @@ server.o: server.c /usr/local/include/event.h \
 
 parson.h:
 
-/usr/include/errno.h:
+hashtable.h:
 
-/usr/include/sys/errno.h:
-
-/usr/include/dirent.h:
-
-/usr/include/sys/dirent.h:
+hashfunc.h:

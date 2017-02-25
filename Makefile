@@ -102,9 +102,13 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_server_OBJECTS = server.$(OBJEXT) parson.$(OBJEXT)
+am_server_OBJECTS = server-server.$(OBJEXT) server-parson.$(OBJEXT) \
+	server-luaconf.$(OBJEXT) server-hashtable.$(OBJEXT) \
+	server-murmur.$(OBJEXT)
 server_OBJECTS = $(am_server_OBJECTS)
 server_LDADD = $(LDADD)
+server_LINK = $(CCLD) $(server_CFLAGS) $(CFLAGS) $(server_LDFLAGS) \
+	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -121,6 +125,10 @@ DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_$(V))
@@ -162,8 +170,8 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 AM_RECURSIVE_TARGETS = cscope
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in compile \
-	depcomp install-sh missing
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in COPYING \
+	INSTALL compile depcomp install-sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -193,9 +201,6 @@ CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = 
-CXX = g++
-CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -219,23 +224,22 @@ MKDIR_P = ./install-sh -c -d
 OBJEXT = o
 PACKAGE = server
 PACKAGE_BUGREPORT = 1548104097@qq.com
-PACKAGE_NAME = event_lua_server
-PACKAGE_STRING = event_lua_server 1.0
-PACKAGE_TARNAME = event_lua_server
+PACKAGE_NAME = server
+PACKAGE_STRING = server 1.1
+PACKAGE_TARNAME = server
 PACKAGE_URL = 
-PACKAGE_VERSION = 1.0
+PACKAGE_VERSION = 1.1
 PATH_SEPARATOR = :
 POW_LIB = 
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 
-VERSION = 1.0
+VERSION = 1.1
 abs_builddir = /Users/edz/projects/engine-event_lua_redis
 abs_srcdir = /Users/edz/projects/engine-event_lua_redis
 abs_top_builddir = /Users/edz/projects/engine-event_lua_redis
 abs_top_srcdir = /Users/edz/projects/engine-event_lua_redis
 ac_ct_CC = gcc
-ac_ct_CXX = g++
 am__include = include
 am__leading_dot = .
 am__quote = 
@@ -273,8 +277,10 @@ target_alias =
 top_build_prefix = 
 top_builddir = .
 top_srcdir = .
-AUTOMAKE_OPTIONS = foreign 
-server_SOURCES = server.c parson.c parson.h
+AUTOMAKE_OPTIONS = foreign
+server_CFLAGS = -D__WITH_MURMUR
+server_LDFLAGS = -levent -llua -D__WITH_MURMUR
+server_SOURCES = server.c parson.c luaconf.c hashtable.c murmur.c 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -373,7 +379,7 @@ clean-binPROGRAMS:
 
 server$(EXEEXT): $(server_OBJECTS) $(server_DEPENDENCIES) $(EXTRA_server_DEPENDENCIES) 
 	@rm -f server$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(server_OBJECTS) $(server_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(server_LINK) $(server_OBJECTS) $(server_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -381,8 +387,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-include ./$(DEPDIR)/parson.Po
-include ./$(DEPDIR)/server.Po
+include ./$(DEPDIR)/server-hashtable.Po
+include ./$(DEPDIR)/server-luaconf.Po
+include ./$(DEPDIR)/server-murmur.Po
+include ./$(DEPDIR)/server-parson.Po
+include ./$(DEPDIR)/server-server.Po
 
 .c.o:
 	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -397,6 +406,76 @@ include ./$(DEPDIR)/server.Po
 #	$(AM_V_CC)source='$<' object='$@' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+server-server.o: server.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-server.o -MD -MP -MF $(DEPDIR)/server-server.Tpo -c -o server-server.o `test -f 'server.c' || echo '$(srcdir)/'`server.c
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-server.Tpo $(DEPDIR)/server-server.Po
+#	$(AM_V_CC)source='server.c' object='server-server.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-server.o `test -f 'server.c' || echo '$(srcdir)/'`server.c
+
+server-server.obj: server.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-server.obj -MD -MP -MF $(DEPDIR)/server-server.Tpo -c -o server-server.obj `if test -f 'server.c'; then $(CYGPATH_W) 'server.c'; else $(CYGPATH_W) '$(srcdir)/server.c'; fi`
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-server.Tpo $(DEPDIR)/server-server.Po
+#	$(AM_V_CC)source='server.c' object='server-server.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-server.obj `if test -f 'server.c'; then $(CYGPATH_W) 'server.c'; else $(CYGPATH_W) '$(srcdir)/server.c'; fi`
+
+server-parson.o: parson.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-parson.o -MD -MP -MF $(DEPDIR)/server-parson.Tpo -c -o server-parson.o `test -f 'parson.c' || echo '$(srcdir)/'`parson.c
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-parson.Tpo $(DEPDIR)/server-parson.Po
+#	$(AM_V_CC)source='parson.c' object='server-parson.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-parson.o `test -f 'parson.c' || echo '$(srcdir)/'`parson.c
+
+server-parson.obj: parson.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-parson.obj -MD -MP -MF $(DEPDIR)/server-parson.Tpo -c -o server-parson.obj `if test -f 'parson.c'; then $(CYGPATH_W) 'parson.c'; else $(CYGPATH_W) '$(srcdir)/parson.c'; fi`
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-parson.Tpo $(DEPDIR)/server-parson.Po
+#	$(AM_V_CC)source='parson.c' object='server-parson.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-parson.obj `if test -f 'parson.c'; then $(CYGPATH_W) 'parson.c'; else $(CYGPATH_W) '$(srcdir)/parson.c'; fi`
+
+server-luaconf.o: luaconf.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-luaconf.o -MD -MP -MF $(DEPDIR)/server-luaconf.Tpo -c -o server-luaconf.o `test -f 'luaconf.c' || echo '$(srcdir)/'`luaconf.c
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-luaconf.Tpo $(DEPDIR)/server-luaconf.Po
+#	$(AM_V_CC)source='luaconf.c' object='server-luaconf.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-luaconf.o `test -f 'luaconf.c' || echo '$(srcdir)/'`luaconf.c
+
+server-luaconf.obj: luaconf.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-luaconf.obj -MD -MP -MF $(DEPDIR)/server-luaconf.Tpo -c -o server-luaconf.obj `if test -f 'luaconf.c'; then $(CYGPATH_W) 'luaconf.c'; else $(CYGPATH_W) '$(srcdir)/luaconf.c'; fi`
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-luaconf.Tpo $(DEPDIR)/server-luaconf.Po
+#	$(AM_V_CC)source='luaconf.c' object='server-luaconf.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-luaconf.obj `if test -f 'luaconf.c'; then $(CYGPATH_W) 'luaconf.c'; else $(CYGPATH_W) '$(srcdir)/luaconf.c'; fi`
+
+server-hashtable.o: hashtable.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-hashtable.o -MD -MP -MF $(DEPDIR)/server-hashtable.Tpo -c -o server-hashtable.o `test -f 'hashtable.c' || echo '$(srcdir)/'`hashtable.c
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-hashtable.Tpo $(DEPDIR)/server-hashtable.Po
+#	$(AM_V_CC)source='hashtable.c' object='server-hashtable.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-hashtable.o `test -f 'hashtable.c' || echo '$(srcdir)/'`hashtable.c
+
+server-hashtable.obj: hashtable.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-hashtable.obj -MD -MP -MF $(DEPDIR)/server-hashtable.Tpo -c -o server-hashtable.obj `if test -f 'hashtable.c'; then $(CYGPATH_W) 'hashtable.c'; else $(CYGPATH_W) '$(srcdir)/hashtable.c'; fi`
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-hashtable.Tpo $(DEPDIR)/server-hashtable.Po
+#	$(AM_V_CC)source='hashtable.c' object='server-hashtable.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-hashtable.obj `if test -f 'hashtable.c'; then $(CYGPATH_W) 'hashtable.c'; else $(CYGPATH_W) '$(srcdir)/hashtable.c'; fi`
+
+server-murmur.o: murmur.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-murmur.o -MD -MP -MF $(DEPDIR)/server-murmur.Tpo -c -o server-murmur.o `test -f 'murmur.c' || echo '$(srcdir)/'`murmur.c
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-murmur.Tpo $(DEPDIR)/server-murmur.Po
+#	$(AM_V_CC)source='murmur.c' object='server-murmur.o' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-murmur.o `test -f 'murmur.c' || echo '$(srcdir)/'`murmur.c
+
+server-murmur.obj: murmur.c
+	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -MT server-murmur.obj -MD -MP -MF $(DEPDIR)/server-murmur.Tpo -c -o server-murmur.obj `if test -f 'murmur.c'; then $(CYGPATH_W) 'murmur.c'; else $(CYGPATH_W) '$(srcdir)/murmur.c'; fi`
+	$(AM_V_at)$(am__mv) $(DEPDIR)/server-murmur.Tpo $(DEPDIR)/server-murmur.Po
+#	$(AM_V_CC)source='murmur.c' object='server-murmur.obj' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_CFLAGS) $(CFLAGS) -c -o server-murmur.obj `if test -f 'murmur.c'; then $(CYGPATH_W) 'murmur.c'; else $(CYGPATH_W) '$(srcdir)/murmur.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
