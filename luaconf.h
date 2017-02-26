@@ -8,19 +8,19 @@
 #include "parson.h"
 #include "hashtable.h"
 
+#define MAX_LUA_BUFFER 4096 
+
 struct lua_ptr{
         char *name;
-        lua_State * LS;
-        struct lua_ptr * next;
+	lua_State * L;
 };
 
 typedef struct lua_ptr lua_ptr_entry ;
 
-static int jsonParse(lua_State *L);
+void fread_lua(char *file,lua_ptr_entry *lpe);
 
-lua_State * createLS(char *file);
+int jsonParse(lua_State *L);
 
-void iniLuaStates();
+void init_lua_buffer();
 
-lua_State * findState(const char *file);
-
+lua_State * new_state(char * file);

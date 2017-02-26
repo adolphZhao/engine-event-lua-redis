@@ -1,2 +1,2 @@
 #!/bin/bash
-gcc server.c hashtable.c parson.c luaconf.c murmur.c  -levent -llua -D__WITH_MURMUR -o new_server
+gcc server.c hashtable.c parson.c luaconf.c murmur.c -g  -levent -llua -D__WITH_MURMUR -o new_server

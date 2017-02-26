@@ -18,10 +18,7 @@
 #define SUCCESS 0
 #define FAILURE -1
 
-lua_ptr_entry * lpe_list;
 int debug = 0;
-extern int errno ;
-lua_State * L=NULL;
 
 struct client {
 	int fd;
@@ -50,6 +47,7 @@ const char * call_lua(lua_State * L,const char *func,JSON_Array *commits)
         } 
 	lua_pcall(L,count,1,0);  
 	result = lua_tostring(L,-1);  
+                lua_pop(L, 1);
 	return result;  
 }
 
@@ -66,22 +64,22 @@ void buf_read_callback(struct bufferevent *incoming, void *arg)
 		i++;
 	}
 
-printf("%s\r\n",req);
-
 	JSON_Value *schema = json_parse_string(req);
 	file =json_object_get_string(json_object(schema),"f");
 	func =json_object_get_string(json_object(schema),"m");	
 	params = json_object_get_array(json_object(schema),"p");
 
-	printf("request => [file: ./script/%s.lua , func: %s ]\r\n",file,func);
+	printf("request => [file: %s , func: %s ]\r\n",file,func);
 	const char * result;
-	lua_State * L = findState(file);
+	lua_State *L =new_state((char *)file);
+
 	if(L==NULL){
 		result ="LUA invoked failure.";
 	}
 	else{
 		result = call_lua(L,func,params);
 	}
+
 	printf("response =>[ result: %s]\r\n",result);
 	
 	evreturn = evbuffer_new();
@@ -141,13 +139,12 @@ void accept_callback(int fd,short ev,void *arg)
 
 int main(int argc,char **argv)
 {
-
-	iniLuaStates();
-
 	int socketlisten;
 	struct sockaddr_in addresslisten;
 	struct event accept_event;
 	int reuse = 1;
+
+	init_lua_buffer();
 
 	event_init();
 
