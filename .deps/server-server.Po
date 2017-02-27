@@ -95,7 +95,7 @@ server-server.o: server.c /usr/local/include/event.h \
  /usr/include/i386/limits.h /usr/include/i386/_limits.h \
  /usr/include/sys/syslimits.h /usr/local/include/lauxlib.h \
  /usr/local/include/lua.h /usr/local/include/lualib.h parson.h \
- hashtable.h hashfunc.h
+ hashtable.h hashfunc.h /usr/include/signal.h
 
 /usr/local/include/event.h:
 
@@ -430,3 +430,5 @@ parson.h:
 hashtable.h:
 
 hashfunc.h:
+
+/usr/include/signal.h:

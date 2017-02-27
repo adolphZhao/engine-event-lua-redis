@@ -13,13 +13,13 @@
 #include <errno.h>
 #include <dirent.h>
 #include "luaconf.h" 
+#include <signal.h>
 
 #define SERVER_PORT 9005
 #define SUCCESS 0
 #define FAILURE -1
 
 int debug = 0;
-
 struct client {
 	int fd;
 	struct bufferevent *buf_ev;
@@ -136,17 +136,50 @@ void accept_callback(int fd,short ev,void *arg)
 
 	bufferevent_enable(client->buf_ev, EV_READ);
 }
+struct event_base * base;
+int socketlisten;
+struct event * accept_event;
+
+void signal_handle(int signal_num)
+{
+	printf("get %d ,exit %p\r\n",signal_num,base);
+
+
+	 if(socketlisten){
+                printf("close socket!\r\n");
+		shutdown(socketlisten,SHUT_RDWR);
+                close(socketlisten);
+}
+	if(event_del(accept_event) == 0) { 
+		printf("free event !\r\n");
+     	   	event_free(accept_event);  
+    	}  
+
+	if(base !=NULL){
+		printf("free base!\r\n");
+		event_base_loopbreak(base);
+		event_base_free(base);
+	}
+}
 
 int main(int argc,char **argv)
 {
-	int socketlisten;
+
+	signal(SIGINT,signal_handle);
+	signal(SIGQUIT,signal_handle);
+	signal(SIGTERM,signal_handle);
+	signal(SIGKILL,signal_handle);
+
+	//int socketlisten;
 	struct sockaddr_in addresslisten;
-	struct event accept_event;
+	//struct event accept_event;
 	int reuse = 1;
 
 	init_lua_buffer();
 
-	event_init();
+	base = event_init();
+	
+	event_base_priority_init(base,0);
 
 	socketlisten = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -182,18 +215,23 @@ int main(int argc,char **argv)
 			&reuse,
 			sizeof(reuse));
 
-	setnonblock(socketlisten);
+	//setnonblock(socketlisten);
 
-	event_set(&accept_event,
-			socketlisten,
-			EV_READ|EV_PERSIST,
-			accept_callback,
+	evutil_make_listen_socket_reuseable(socketlisten);   
+    	evutil_make_socket_nonblocking(socketlisten);
+
+	accept_event = event_new(base, socketlisten, EV_READ|EV_PERSIST, accept_callback, NULL);
+	//event_set(accept_event,
+	//		socketlisten,
+	//		EV_READ|EV_PERSIST,
+	//		accept_callback,
+	//		NULL);
+//
+	event_add(accept_event,
 			NULL);
 
-	event_add(&accept_event,
-			NULL);
-
-	event_dispatch();
+	event_base_dispatch(base);
+	//event_dispatch();
 
 	close(socketlisten);
 
