@@ -25,15 +25,6 @@ struct client {
 	struct bufferevent *buf_ev;
 };
 
-void setnonblock(int fd)
-{
-	int flags;
-
-	flags = fcntl(fd, F_GETFL);
-	flags |= O_NONBLOCK;
-	fcntl(fd, F_SETFL, flags);
-}
-
 const char * call_lua(lua_State * L,const char *func,JSON_Array *commits)
 {
 	const char * result;
@@ -120,8 +111,8 @@ void accept_callback(int fd,short ev,void *arg)
 		warn("Client: accept() failed");
 		return;
 	}
-
-	setnonblock(client_fd);
+evutil_make_socket_nonblocking(client_fd);
+	//setnonblock(client_fd);
 
 	client = calloc(1, sizeof(*client));
 	if (client == NULL)
@@ -137,7 +128,7 @@ void accept_callback(int fd,short ev,void *arg)
 	bufferevent_enable(client->buf_ev, EV_READ);
 }
 struct event_base * base;
-int socketlisten;
+evutil_socket_t socketlisten;
 struct event * accept_event;
 
 void signal_handle(int signal_num)
@@ -147,9 +138,10 @@ void signal_handle(int signal_num)
 
 	 if(socketlisten){
                 printf("close socket!\r\n");
-		shutdown(socketlisten,SHUT_RDWR);
-                close(socketlisten);
-}
+		//shutdown(socketlisten,SHUT_RDWR);
+                //close(socketlisten);
+		evutil_closesocket(socketlisten);
+	}
 	if(event_del(accept_event) == 0) { 
 		printf("free event !\r\n");
      	   	event_free(accept_event);  
@@ -160,6 +152,7 @@ void signal_handle(int signal_num)
 		event_base_loopbreak(base);
 		event_base_free(base);
 	}
+	exit(SUCCESS);
 }
 
 int main(int argc,char **argv)
@@ -172,8 +165,8 @@ int main(int argc,char **argv)
 
 	//int socketlisten;
 	struct sockaddr_in addresslisten;
-	//struct event accept_event;
-	int reuse = 1;
+	int l;
+
 
 	init_lua_buffer();
 
@@ -189,15 +182,16 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
+        evutil_make_listen_socket_reuseable(socketlisten);
+        evutil_make_socket_nonblocking(socketlisten);
+
 	memset(&addresslisten, 0, sizeof(addresslisten));
 
 	addresslisten.sin_family = AF_INET;
 	addresslisten.sin_addr.s_addr = INADDR_ANY;
 	addresslisten.sin_port = htons(SERVER_PORT);
 
-	if (bind(socketlisten,
-				(struct sockaddr *)&addresslisten,
-				sizeof(addresslisten)) < 0)
+	if (bind(socketlisten,(struct sockaddr*)&addresslisten,sizeof(addresslisten)) < 0)
 	{
 		fprintf(stderr,"Failed to bind");
 		return 1;
@@ -209,29 +203,10 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	setsockopt(socketlisten,
-			SOL_SOCKET,
-			SO_REUSEADDR,
-			&reuse,
-			sizeof(reuse));
-
-	//setnonblock(socketlisten);
-
-	evutil_make_listen_socket_reuseable(socketlisten);   
-    	evutil_make_socket_nonblocking(socketlisten);
-
 	accept_event = event_new(base, socketlisten, EV_READ|EV_PERSIST, accept_callback, NULL);
-	//event_set(accept_event,
-	//		socketlisten,
-	//		EV_READ|EV_PERSIST,
-	//		accept_callback,
-	//		NULL);
-//
-	event_add(accept_event,
-			NULL);
+	event_add(accept_event,	NULL);
 
 	event_base_dispatch(base);
-	//event_dispatch();
 
 	close(socketlisten);
 
