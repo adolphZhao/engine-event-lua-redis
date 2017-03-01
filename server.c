@@ -163,10 +163,7 @@ int main(int argc,char **argv)
 	signal(SIGTERM,signal_handle);
 	signal(SIGKILL,signal_handle);
 
-	//int socketlisten;
 	struct sockaddr_in addresslisten;
-	int l;
-
 
 	init_lua_buffer();
 
@@ -197,7 +194,7 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	if (listen(socketlisten, 5) < 0)
+	if (listen(socketlisten, 15) < 0)
 	{
 		fprintf(stderr,"Failed to listen to socket");
 		return 1;
